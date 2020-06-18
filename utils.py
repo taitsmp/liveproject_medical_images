@@ -1,5 +1,6 @@
 
 from torch.utils.data.dataset import Dataset
+import torch.nn as nn
 import nibabel as nib
 from fnmatch import fnmatch
 import os,re
@@ -128,4 +129,18 @@ class RandomCrop3D:
             
         return transformed
         
+class MRConvNet(nn.Module):
+    def __init__(self, nChans=[16,1]):
+        super(MRConvNet, self).__init__()
+        self.conv1 = nn.Conv3d(1, nChans[0], 3, padding=1)
+        self.bnorm = nn.BatchNorm3d(nChans[0])
+        self.drop1 = nn.Dropout3d(p=0.3)
+        self.conv2 = nn.Conv3d(nChans[0], nChans[1], 3, padding=1)
+        
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = self.bnorm(x) #some debate about whether or not to apply batchnorm before or after the nonlinearity. 
+        x = self.drop1(x)
+        x = F.relu(self.conv2(x))       
+        return x
 
