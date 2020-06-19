@@ -1,5 +1,6 @@
 
 from torch.utils.data.dataset import Dataset
+import torch
 import torch.nn as nn
 import nibabel as nib
 from fnmatch import fnmatch
@@ -129,6 +130,18 @@ class RandomCrop3D:
             
         return transformed
         
+class ToTensor:
+
+    def __call__(self, sample):
+
+        t_dict = {}
+        for i in ['source', 'target']:
+            nifti  = sample[i]
+            np_img = nifti.get_fdata()
+            tensor = torch.from_numpy(np_img.transpose(2,0,1))
+            t_dict[i] = tensor
+        return t_dict
+
 class MRConvNet(nn.Module):
     def __init__(self, nChans=[16,1]):
         super(MRConvNet, self).__init__()
