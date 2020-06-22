@@ -2,6 +2,7 @@
 from torch.utils.data.dataset import Dataset
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import nibabel as nib
 from fnmatch import fnmatch
 import os,re
