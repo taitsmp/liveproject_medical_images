@@ -133,7 +133,7 @@ class RandomCrop3D:
 
 class ToNumpy:
     def __call__(self, sample):
-        return {k:v.get_fdata() for k,v in sample.items() }
+        return {k:v.get_fdata().astype('float') for k,v in sample.items() }
 
 class AddDim:
 
@@ -156,11 +156,11 @@ class ToTensor:
             else:
                print("Unexpected number of dimensions. Skipping transpose.")
                tensor = torch.from_numpy(np_img)
-            t_dict[i] = tensor
+            t_dict[i] = tensor.float()
         return t_dict
 
 class MRConvNet(nn.Module):
-    def __init__(self, nChans=[16,1], kernel_size=60):
+    def __init__(self, nChans=[16,1], kernel_size=3):
         super(MRConvNet, self).__init__()
         self.conv1 = nn.Conv3d(1, nChans[0], kernel_size, padding=1)
         self.bnorm = nn.BatchNorm3d(nChans[0])
