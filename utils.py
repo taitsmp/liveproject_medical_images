@@ -130,26 +130,42 @@ class RandomCrop3D:
             transformed[i] = RandomCrop3D.crop(img_obj, self.output_size, (top, left, front))
             
         return transformed
-        
+
+class ToNumpy:
+    def __call__(self, sample):
+        return {k:v.get_fdata() for k,v in sample.items() }
+
+class AddDim:
+
+    def __call__(self, sample):
+        return {k:np.expand_dims(v, axis=0) for k,v in sample.items() }
+
 class ToTensor:
 
     def __call__(self, sample):
 
         t_dict = {}
         for i in ['source', 'target']:
-            nifti  = sample[i]
-            np_img = nifti.get_fdata()
-            tensor = torch.from_numpy(np_img.transpose(2,0,1))
+            #nifti  = sample[i]
+            #np_img = nifti.get_fdata()
+            np_img = sample[i]
+            if np_img.ndim == 3:
+               tensor = torch.from_numpy(np_img.transpose(2,0,1))
+            elif np_img.ndim == 4:
+               tensor = torch.from_numpy(np_img.transpose(0,3,1,2)) 
+            else:
+               print("Unexpected number of dimensions. Skipping transpose.")
+               tensor = torch.from_numpy(np_img)
             t_dict[i] = tensor
         return t_dict
 
 class MRConvNet(nn.Module):
-    def __init__(self, nChans=[16,1]):
+    def __init__(self, nChans=[16,1], kernel_size=60):
         super(MRConvNet, self).__init__()
-        self.conv1 = nn.Conv3d(1, nChans[0], 3, padding=1)
+        self.conv1 = nn.Conv3d(1, nChans[0], kernel_size, padding=1)
         self.bnorm = nn.BatchNorm3d(nChans[0])
         self.drop1 = nn.Dropout3d(p=0.3)
-        self.conv2 = nn.Conv3d(nChans[0], nChans[1], 3, padding=1)
+        self.conv2 = nn.Conv3d(nChans[0], nChans[1], kernel_size, padding=1)
         
     def forward(self, x):
         x = F.relu(self.conv1(x))
