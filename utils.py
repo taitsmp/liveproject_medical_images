@@ -68,15 +68,17 @@ class NiftiDataset(Dataset):
 
 class NiftiSplitDataset(NiftiDataset):
     
-    def __init__(self, source_dir, target_dir, mask: List[int], transform=None):
+    def __init__(self, source_dir, target_dir, mask: List[int], transform=None, mult=1):
         super(NiftiSplitDataset, self).__init__(source_dir, target_dir, transform)
         assert(len(self.subj_list) >= len(mask))
         self.mask_subjs = mask
+        self.mult = mult
     
     def __len__(self):
-        return len(self.mask_subjs)
+        return self.mult * len(self.mask_subjs)
 
     def __getitem__(self, idx):
+        idx = idx % len(self.mask_subjs) #in case mult argument is used. TODO: this could be cleaned up to throw an error when appropriate. 
         idx = self.mask_subjs[idx]
         return super(NiftiSplitDataset, self).__getitem__(idx)
         
