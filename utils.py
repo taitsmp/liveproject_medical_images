@@ -66,6 +66,7 @@ class NiftiDataset(Dataset):
         idx  = self.subj_list.index(subj)
         return self[idx]
 
+#NOTE: there are better ways to handle this. See Subset and Sampler in Pytorch. 
 class NiftiSplitDataset(NiftiDataset):
     
     def __init__(self, source_dir, target_dir, mask: List[int], transform=None, mult=1):
@@ -135,17 +136,35 @@ class RandomCrop3D:
 
 class ToNumpy:
     def __call__(self, sample):
+        
+        if isinstance(sample,tuple):
+            s,t = sample
+            return (s.get_fdata().astype('float'), t.get_fdata().astype('float'))
+        
         return {k:v.get_fdata().astype('float') for k,v in sample.items() }
 
 class AddDim:
 
     def __call__(self, sample):
+        
+        if isinstance(sample,tuple):
+            s,t = sample
+            return (np.expand_dims(s, axis=0), np.expand_dims(t, axis=0))
+        
         return {k:np.expand_dims(v, axis=0) for k,v in sample.items() }
 
 class ToTensor:
 
     def __call__(self, sample):
 
+        was_tuple = False
+        print('in ToTensor')
+        if type(sample) is tuple:
+            was_tuple = True
+            src, trg = sample
+            print('here')
+            sample = { 'source': src, 'target': trg }
+        
         t_dict = {}
         for i in ['source', 'target']:
             #nifti  = sample[i]
@@ -159,6 +178,10 @@ class ToTensor:
                print("Unexpected number of dimensions. Skipping transpose.")
                tensor = torch.from_numpy(np_img)
             t_dict[i] = tensor.float()
+            
+        if was_tuple:
+            return (t_dict['source'], t_dict['target'])
+        
         return t_dict
 
 class MRConvNet(nn.Module):
