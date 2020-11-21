@@ -17,6 +17,7 @@ def load_mr_image(subj, ttype):
     return nib.load(f'./data/small/{ttype}/{subj}-{suff}_fcm.nii.gz')
 
 def path_to_subj(path):
+    path = str(path)
     m = re.search(r"(IXI\d{3}-HH-\d{4})", path)
     return m.group(1)
 
